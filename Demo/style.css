@@ -1,0 +1,51 @@
+#calendar {
+	position: relative;
+	top: 100px;
+	margin: 0 auto;
+	width: 800px;
+}
+
+table {
+	width: 100%;
+	background: #eee;
+}
+	thead {
+		background: #ddd;
+	}
+		table th {
+			text-align: center;
+		}
+		table th.previous,
+		table th.next {
+			cursor: pointer;
+		}
+		table th.week {
+			background: #ccc;
+		}
+		table th.weekend {
+			background: #eee;
+		}
+		
+	table td {
+		height: 80px;
+		text-align: center;
+	}
+		table td.week {
+			background: #ddd;
+		}
+		table td.weekend {
+			background: #fff;
+		}
+		table td.inactive {
+			color: #ccc;
+		}
+		table td.today {
+			border: 1px solid #f00;
+		}
+		table td.event {
+			background: #0f0;
+			color: #fff;
+		}
+		table td.multi-event {
+			border: 1px dashed #00f;
+		}
