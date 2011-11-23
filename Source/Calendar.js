@@ -1,32 +1,40 @@
 var Calendar = new Class({
-	
+
 	Implements: [Options, Events],
-	
+
 	options: {
 		yearFormat: '%Y',
 		monthFormat: '%B',
 		previousMonth: '&laquo;',
 		nextMonth: '&raquo;',
-		firstDayOfWeek: 1,
-		showWeeks: true
+		firstDayOfWeek: 1
 	},
-	
+
 	events: {},
-	
+
 	initialize: function(container, options){
 		this.setOptions(options);
 		this.container = document.id(container);
 		this.container.addEvent('click:relay(th.previous)', this.previous.bind(this));
 		this.container.addEvent('click:relay(th.next)', this.next.bind(this));
-		this.container.addEvent('click:relay(td:not(.week))', this.click.bind(this));
+		this.container.addEvent('click:relay(td.event)', this.click.bind(this));
+		this.date = new Date().clearTime();
 	},
 
 	setDate: function(date){
 		this.date = date.clearTime();
 		this.render(this.date);
 	},
+	
+	clearCalendarEvents: function(){
+		this.events = {};
+	},
 
-	addCalendarEvent: function(date, klass, data){
+	clearCalendarEvents: function(){
+		this.events = {};
+	},
+
+	addCalendarEvent: function(date, data){
 		if(date == null)
 			return;
 
@@ -35,10 +43,7 @@ var Calendar = new Class({
 		if(this.events[k] == undefined)
 			this.events[k] = [];
 
-		this.events[k].push({
-			'class': klass || 'event',
-			data: data
-		});
+		this.events[k].push(data);
 	},
 
 	/*
@@ -59,18 +64,20 @@ var Calendar = new Class({
 		this.fireEvent('change', this.date.clone());
 		this.render(this.date);
 	},
-	
+
 	click: function(event, td){
 		var date = td.retrieve('date').clone(),
-			data = this.getCalendarEvents(date);
+			events = this.getCalendarEvents(date);
 		this.fireEvent('dayclick', {
+			element: td,
 			date: date,
-			data: data
+			events: events
 		});
 	},
 
 	render: function(date){
-		this.date = date || new Date().clearTime();
+		if(date)
+			this.date = date;
 		this.container.empty();
 		var options = this.options,
 			date = this.date.clearTime().clone(),
@@ -80,19 +87,19 @@ var Calendar = new Class({
 
 		new Element('table', {'border-spacing': 0}).adopt(
 			new Element('thead').adopt(
-				new Element('tr').adopt(
+			/*	new Element('tr').adopt(
 					new Element('th', {colspan: 8, text: date.format(options.yearFormat)})
-				),
+				), */
 				new Element('tr.month').adopt(
 					new Element('th.previous', {html: options.previousMonth}),
-					new Element('th', {colspan: 6, text: date.format(options.monthFormat)}),
+					new Element('th', {colspan: 6, text: date.format(options.monthFormat) + ' ' + date.format(options.yearFormat)}),
 					new Element('th.next', {html: options.nextMonth})
 				),
-				dayNamesContainer = new Element('tr')
+				dayNamesContainer = new Element('tr.week')
 			),
 			dayContainer = new Element('tbody')
 		).inject(this.container);
-		
+
 		dayNamesContainer.adopt(new Element('th.week', {text:Locale.get('Date.week')}));
 
 		// Day Headers
@@ -133,15 +140,19 @@ var Calendar = new Class({
 			if(date.get('day') == 0 || date.get('day') > 5)
 				day.addClass('weekend');
 
-			if(date.getMonth() != this.date.getMonth())
+			if(date.getMonth() != this.date.getMonth()){
 				day.addClass('inactive');
-
-			this.getCalendarEvents(date).each(function(data){
-				var klass = data['class'];
-				if(day.hasClass(klass))
-					day.addClass('multi-' + klass);
-				day.addClass(klass);
-			});
+			} else {
+				var events = this.getCalendarEvents(date);
+				events.each(function(data){
+					var klass = data.type;
+					if(day.hasClass(klass))
+						day.addClass('multi-' + klass);
+					day.addClass(klass);
+				});
+				if(events.length > 0)
+					day.addEvent('event');
+			}
 
 			date.increment('day', 1);
 		}
